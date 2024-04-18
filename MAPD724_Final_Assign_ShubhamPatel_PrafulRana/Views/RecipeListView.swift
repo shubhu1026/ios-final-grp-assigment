@@ -10,7 +10,9 @@ import SwiftUI
 struct RecipeListView: View {
     @State private var recipes: [Recipe] = []
     @State private var selectedRecipe: Recipe? = nil // Track the selected recipe
-    @Binding var favoriteRecipes: [Recipe]// Track favorite recipes
+    @State private var showMinimalDetailsSheet = false
+    
+    @EnvironmentObject private var favoriteRecipesViewModel: FavoriteRecipesViewModel
     
     var body: some View {
         VStack {
@@ -18,7 +20,7 @@ struct RecipeListView: View {
                 ScrollView {
                     LazyVStack(spacing: 10) {
                         ForEach(recipes) { recipe in
-                            RecipeCardView(recipe: recipe, isFavorite: favoriteRecipes.contains(where: { $0.id == recipe.id })) {
+                            RecipeCardView(recipe: recipe, isFavorite: isFavorite(recipe)) {
                                 toggleFavorite(recipe)
                             }
                             .onTapGesture {
@@ -33,6 +35,10 @@ struct RecipeListView: View {
                                     }
                                 }
                             )
+                            .onLongPressGesture {
+                                selectedRecipe = recipe
+                                showMinimalDetailsSheet = true
+                            }
                         }
                     }
                     .padding()
@@ -42,9 +48,14 @@ struct RecipeListView: View {
                 ProgressView()
             }
         }
+        .sheet(isPresented: $showMinimalDetailsSheet) {
+                    if let selectedRecipe = selectedRecipe {
+                        RecipeMinimalDetailsView(recipe: selectedRecipe)
+                            .presentationDetents([.medium])
+                    }
+        }
         .sheet(item: $selectedRecipe) { recipe in
-            // Present details of the selected recipe in a modal
-            RecipeDetailView(recipe: recipe).padding()
+                    RecipeDetailView(recipe: recipe).padding()
         }
         .onAppear {
             fetchRandomRecipes()
@@ -64,21 +75,27 @@ struct RecipeListView: View {
         }
     }
     
-    func toggleFavorite(_ recipe: Recipe) {
-        if let index = favoriteRecipes.firstIndex(where: { $0.id == recipe.id }) {
-            favoriteRecipes.remove(at: index)
-        } else {
-            favoriteRecipes.append(recipe)
-        }
-    }
+    //    func toggleFavorite(_ recipe: Recipe) {
+    //        if let index = favoriteRecipes.firstIndex(where: { $0.id == recipe.id }) {
+    //            favoriteRecipes.remove(at: index)
+    //        } else {
+    //            favoriteRecipes.append(recipe)
+    //        }
+    //    }
     
     func addFavorite(_ recipe: Recipe) {
-        favoriteRecipes.append(recipe)
+        favoriteRecipesViewModel.addFav(recipeID: recipe.id)
     }
     
     func removeFavorite(_ recipe: Recipe) {
-        if let index = favoriteRecipes.firstIndex(where: { $0.id == recipe.id }) {
-            favoriteRecipes.remove(at: index)
-        }
+        favoriteRecipesViewModel.removeFav(recipeID: recipe.id)
+    }
+    
+    private func toggleFavorite(_ recipe: Recipe) {
+        favoriteRecipesViewModel.toggleFavorite(recipeID: recipe.id)
+    }
+    
+    private func isFavorite(_ recipe: Recipe) -> Bool {
+        return favoriteRecipesViewModel.isFavorite(recipeID: recipe.id)
     }
 }

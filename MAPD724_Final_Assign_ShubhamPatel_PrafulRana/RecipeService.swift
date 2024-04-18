@@ -9,6 +9,7 @@ import Foundation
 
 struct RecipeService {
     static let baseURLString = "https://api.spoonacular.com"
+    static let apiKey = "c01c9f249753437db74cb30337ca7e37"
     
     static func searchRecipes(search: String, count: Int, completion: @escaping (Result<[Recipe], Error>) -> Void) {
         var components = URLComponents(string: baseURLString)
@@ -16,7 +17,7 @@ struct RecipeService {
         components?.queryItems = [
             URLQueryItem(name: "query", value: search),
             URLQueryItem(name: "number", value: "\(count)"),
-            URLQueryItem(name: "apiKey", value: "c01c9f249753437db74cb30337ca7e37")
+            URLQueryItem(name: "apiKey", value: apiKey)
         ]
         
         guard let url = components?.url else {
@@ -40,6 +41,44 @@ struct RecipeService {
             
             do {
                 let decoder = JSONDecoder()
+                let searchRecipeResponse = try decoder.decode(SearchRecipeResponse.self, from: data)
+                completion(.success(searchRecipeResponse.results))
+            } catch {
+                completion(.failure(error))
+            }
+        }.resume()
+    }
+    
+    static func getRandomRecipes(count: Int, completion: @escaping (Result<[Recipe], Error>) -> Void) {
+        var components = URLComponents(string: baseURLString)
+        components?.path = "/recipes/random"
+        components?.queryItems = [
+            URLQueryItem(name: "number", value: "\(count)"),
+            URLQueryItem(name: "apiKey", value: apiKey)
+        ]
+        
+        guard let url = components?.url else {
+            completion(.failure(NSError(domain: "", code: 0, userInfo: [NSLocalizedDescriptionKey: "Invalid URL"])))
+            return
+        }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            if let error = error {
+                completion(.failure(error))
+                return
+            }
+            
+            guard let data = data else {
+                completion(.failure(NSError(domain: "", code: 0, userInfo: [NSLocalizedDescriptionKey: "No data received"])))
+                return
+            }
+            // print(String(data: data, encoding: .utf8))
+            
+            do {
+                let decoder = JSONDecoder()
                 let recipeResponse = try decoder.decode(RecipeResponse.self, from: data)
                 completion(.success(recipeResponse.recipes))
             } catch {
@@ -48,12 +87,50 @@ struct RecipeService {
         }.resume()
     }
     
-    static func getRandomRecipes(count: Int, completion: @escaping (Result<[Recipe], Error>) -> Void) {
+    static func getRecipeDetails(recipeID: Int, completion: @escaping (Result<Recipe, Error>) -> Void) {
+        var components = URLComponents(string: baseURLString)
+        components?.path = "/recipes/\(recipeID)/information"
+        components?.queryItems = [
+            URLQueryItem(name: "includeNutrition", value: "false"),
+            URLQueryItem(name: "apiKey", value: apiKey)
+        ]
+        
+        guard let url = components?.url else {
+            completion(.failure(NSError(domain: "", code: 0, userInfo: [NSLocalizedDescriptionKey: "Invalid URL"])))
+            return
+        }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            if let error = error {
+                completion(.failure(error))
+                return
+            }
+            
+            guard let data = data else {
+                completion(.failure(NSError(domain: "", code: 0, userInfo: [NSLocalizedDescriptionKey: "No data received"])))
+                return
+            }
+            
+            do {
+                let decoder = JSONDecoder()
+                let recipe = try decoder.decode(Recipe.self, from: data)
+                completion(.success(recipe))
+            } catch {
+                completion(.failure(error))
+            }
+        }.resume()
+    }
+    
+    static func getMultipleRecipeDetails(recipeIDs: [Int], completion: @escaping (Result<[Recipe], Error>) -> Void) {
+            let recipeIDsString = recipeIDs.map { String($0) }.joined(separator: ",")
             var components = URLComponents(string: baseURLString)
-            components?.path = "/recipes/random"
+            components?.path = "/recipes/informationBulk"
             components?.queryItems = [
-                URLQueryItem(name: "number", value: "\(count)"),
-                URLQueryItem(name: "apiKey", value: "c01c9f249753437db74cb30337ca7e37")
+                URLQueryItem(name: "ids", value: recipeIDsString),
+                URLQueryItem(name: "apiKey", value: apiKey)
             ]
             
             guard let url = components?.url else {
@@ -74,12 +151,11 @@ struct RecipeService {
                     completion(.failure(NSError(domain: "", code: 0, userInfo: [NSLocalizedDescriptionKey: "No data received"])))
                     return
                 }
-               // print(String(data: data, encoding: .utf8))
-
+                
                 do {
                     let decoder = JSONDecoder()
-                    let recipeResponse = try decoder.decode(RecipeResponse.self, from: data)
-                    completion(.success(recipeResponse.recipes))
+                    let recipes = try decoder.decode([Recipe].self, from: data)
+                    completion(.success(recipes))
                 } catch {
                     completion(.failure(error))
                 }
@@ -93,3 +169,6 @@ struct RecipeResponse: Codable {
     let recipes: [Recipe]
 }
 
+struct SearchRecipeResponse: Codable {
+    let results: [Recipe]
+}

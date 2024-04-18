@@ -8,18 +8,26 @@
 import SwiftUI
 
 struct ContentView: View {
-    @State private var favoriteRecipes: [Recipe] = []
+    @StateObject private var favoriteRecipesViewModel = FavoriteRecipesViewModel()
     
     var body: some View {
         TabView {
-            RecipeListView(favoriteRecipes: $favoriteRecipes)
+            RecipeListView()
+                .environmentObject(favoriteRecipesViewModel)
                 .tabItem {
                     Label("Recipes", systemImage: "book")
                 }
             
-            FavouriteRecipesView(favoriteRecipes: $favoriteRecipes)
+            FavouriteRecipesView()
+                .environmentObject(favoriteRecipesViewModel)
                 .tabItem {
                     Label("Favourites", systemImage: "heart.fill")
+                }
+            
+            SearchRecipesView()
+                .environmentObject(favoriteRecipesViewModel)
+                .tabItem {
+                    Label("Search", systemImage: "magnifyingglass")
                 }
         }
     }

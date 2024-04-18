@@ -31,6 +31,20 @@ struct RecipeDetailView: View {
                     .bold()
                     .padding(.bottom)
                 
+                Text("Dietary Preference:")
+                    .font(.title3)
+                    .bold()
+                
+                HStack {
+                    Image(recipe.vegetarian ?? true ? "veg" : "nonveg")
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 30, height: 30)
+                    Text(recipe.vegetarian ?? true ? "Vegetarian" : "Non-Vegetarian")
+                        .font(.body)
+                }
+                .padding(.bottom)
+                
                 Text("Ingredients:")
                     .font(.title3)
                     .bold()
