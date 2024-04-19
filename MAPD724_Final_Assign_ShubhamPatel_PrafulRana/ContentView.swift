@@ -12,24 +12,25 @@ struct ContentView: View {
     
     var body: some View {
         TabView {
-            RecipeListView()
+            HomeView()
                 .environmentObject(favoriteRecipesViewModel)
                 .tabItem {
-                    Label("Recipes", systemImage: "book")
+                    Label("Home", systemImage: "house.fill")
                 }
             
-            FavouriteRecipesView()
+            RecipeSearchByIngredientsView()
+                .environmentObject(favoriteRecipesViewModel)
+                .tabItem {
+                    Label("Recipe Search", systemImage: "book")
+                }
+            
+            FavoriteRecipesView()
                 .environmentObject(favoriteRecipesViewModel)
                 .tabItem {
                     Label("Favourites", systemImage: "heart.fill")
                 }
-            
-            SearchRecipesView()
-                .environmentObject(favoriteRecipesViewModel)
-                .tabItem {
-                    Label("Search", systemImage: "magnifyingglass")
-                }
         }
+        .accentColor(Color("Pink"))
     }
 }
 

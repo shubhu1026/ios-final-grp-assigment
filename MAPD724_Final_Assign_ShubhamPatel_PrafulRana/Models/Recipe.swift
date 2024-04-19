@@ -22,6 +22,8 @@ struct Recipe: Codable, Identifiable {
     let title: String
     let image: URL
     let imageType: String
+    var readyInMinutes: Int?
+    var servings: Int?
     var vegetarian: Bool?
     var ingredients: [ExtendedIngredient]? = []
     var instructions: String?
@@ -46,6 +48,8 @@ struct Recipe: Codable, Identifiable {
         case title
         case image
         case imageType
+        case readyInMinutes
+        case servings
         case vegetarian
         case extendedIngredients
         case analyzedInstructions
@@ -61,6 +65,8 @@ struct Recipe: Codable, Identifiable {
         imageType = try container.decode(String.self, forKey: .imageType)
 
         // Optional decoding for other properties
+        readyInMinutes = try? container.decode(Int.self, forKey: .readyInMinutes)
+        servings = try? container.decode(Int.self, forKey: .servings)
         vegetarian = try? container.decode(Bool.self, forKey: .vegetarian)
         instructions = try? container.decode(String.self, forKey: .instructions)
 
